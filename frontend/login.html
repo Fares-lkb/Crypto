@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="login.css"/>
+</head>
+<body>
+
+  <div class="login-page">
+
+    <div class="login-brand">
+      <div class="login-icon"><i class="fas fa-shield-halved"></i></div>
+      <div class="login-title">Secure Cloud</div>
+      <div class="login-subtitle">Digital Vault</div>
+    </div>
+
+    <div class="login-card">
+      <div class="login-card-title">Vault Authorization</div>
+      <p class="login-card-sub">Provide your credentials to access the encrypted environment.</p>
+
+      <div class="field-group">
+        <label class="field-label">Username</label>
+        <div class="input-wrap">
+          <span class="input-icon"><i class="fas fa-user"></i></span>
+          <input type="text" id="vaultEmail" placeholder="your_username"/>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-row">
+          <label class="field-label">Password</label>
+          
+        </div>
+        <div class="input-wrap">
+          <span class="input-icon"><i class="fas fa-key"></i></span>
+          <input type="password" id="vaultPass" placeholder="••••••••••••"/>
+          <button class="eye-btn" onclick="togglePassword()" type="button">
+            <i class="fas fa-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+        <div class="field-error" id="fieldError"></div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Private Key File (.pem)</label>
+        <div class="input-wrap" style="padding: 8px 12px;">
+          <span class="input-icon"><i class="fas fa-file-signature"></i></span>
+          <input type="file" id="privateKeyFile" accept=".pem,.key,.txt" style="padding: 6px 0;"/>
+        </div>
+      </div>
+
+      <button class="btn-enter-vault" onclick="enterVault()">
+        Enter Vault <i class="fas fa-arrow-right-to-bracket"></i>
+      </button>
+
+      <p style="margin-top:18px;text-align:center;font-size:13px;color:#475569">
+        No account yet? <a href="register.html" style="color:#2563eb;font-weight:700">Create Vault</a>
+      </p>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/11.1.0/jsrsasign-all-min.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

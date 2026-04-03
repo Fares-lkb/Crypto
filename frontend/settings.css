@@ -1,0 +1,154 @@
+/* ══════════════════════════════════════
+   settings.css  —  styles for settings.html only
+══════════════════════════════════════ */
+
+.settings-content {
+  padding: 36px 40px;
+  display: flex; flex-direction: column;
+  gap: 24px; flex: 1; overflow-y: auto;
+}
+
+/* ── Header ── */
+.settings-header h2 { font-size: 26px; font-weight: 800; color: #0f172a; }
+.settings-header p  { font-size: 14px; color: #475569; margin-top: 5px; line-height: 1.6; }
+
+/* ── Layout ── */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ── Categories sidebar ── */
+.settings-categories h4 {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: #94a3b8; margin-bottom: 12px;
+}
+
+.settings-cat-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px; border-radius: 10px;
+  font-size: 14px; font-weight: 600; color: #475569;
+  cursor: pointer; border: 1.5px solid transparent;
+  margin-bottom: 4px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.settings-cat-item i { font-size: 11px; }
+.settings-cat-item.active {
+  background: #eff6ff; color: #2563eb; border-color: #bfdbfe;
+}
+.settings-cat-item:hover:not(.active) {
+  background: #f8fafc; color: #0f172a;
+}
+
+/* ── Panels ── */
+.settings-panels { display: flex; flex-direction: column; }
+
+.settings-panel {
+  background: #fff; border: 1.5px solid #e2e8f0;
+  border-radius: 16px; padding: 28px 32px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+
+.settings-panel.hidden { display: none; }
+
+/* ── Panel header ── */
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.panel-header h3 { font-size: 17px; font-weight: 800; color: #0f172a; }
+
+.update-link {
+  font-size: 13px; font-weight: 700; color: #2563eb;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.update-link:hover { opacity: 0.75; }
+
+/* ── Profile identity block ── */
+.profile-identity {
+  display: flex; align-items: center; gap: 18px;
+  padding: 20px; background: #f8fafc;
+  border-radius: 12px; position: relative;
+}
+
+.profile-avatar-wrap { position: relative; }
+
+.profile-avatar {
+  width: 68px; height: 68px; border-radius: 14px;
+  background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; overflow: hidden;
+}
+
+.edit-avatar-btn {
+  position: absolute; bottom: -4px; right: -4px;
+  width: 22px; height: 22px; background: #2563eb;
+  border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: 10px; color: #fff;
+  cursor: pointer; border: 2px solid #fff;
+}
+
+.profile-name-block h3 { font-size: 18px; font-weight: 800; color: #0f172a; }
+.profile-name-block p  { font-size: 13px; color: #475569; margin-top: 2px; }
+
+.plan-badge {
+  display: inline-block; padding: 3px 10px;
+  background: #eff6ff; color: #2563eb;
+  border-radius: 99px; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; margin-top: 6px;
+}
+
+/* ── Profile fields ── */
+.profile-fields {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+
+.profile-field label {
+  display: block; font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: #94a3b8; margin-bottom: 6px;
+}
+
+.profile-field input {
+  width: 100%; padding: 11px 14px;
+  background: #f8fafc; border: 1.5px solid #e2e8f0;
+  border-radius: 9px; font-family: inherit;
+  font-size: 14px; color: #0f172a; outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.profile-field input:focus { border-color: #2563eb; background: #fff; }
+
+.readonly-field { opacity: 0.55; cursor: default !important; }
+.readonly-field:focus { border-color: #e2e8f0 !important; background: #f8fafc !important; }
+
+/* ── Danger zone ── */
+.danger-zone {
+  background: #fff5f5; border: 1.5px solid #fecaca;
+  border-radius: 12px; padding: 18px 22px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.danger-zone-text h4 { font-size: 14px; font-weight: 700; color: #dc2626; margin-bottom: 3px; }
+.danger-zone-text p  { font-size: 12.5px; color: #ef4444; }
+
+/* ── Billing panel ── */
+.billing-plan-card {
+  background: linear-gradient(135deg, #1a4fa0, #163f85);
+  border-radius: 14px; padding: 24px 28px; color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.billing-plan-card h3 { font-size: 20px; font-weight: 800; }
+.billing-plan-card p  { font-size: 13px; opacity: 0.75; margin-top: 4px; }
+.billing-plan-card .price { font-size: 32px; font-weight: 800; }
+.billing-plan-card .price span { font-size: 14px; font-weight: 500; opacity: 0.70; }
+
+.billing-features { display: flex; flex-direction: column; gap: 10px; }
+.billing-feature  { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #475569; }
+.billing-feature i { color: #22c55e; font-size: 15px; }
+
+@media (max-width: 820px) {
+  .settings-layout  { grid-template-columns: 1fr; }
+  .profile-fields   { grid-template-columns: 1fr; }
+  .settings-content { padding: 24px 20px; }
+}

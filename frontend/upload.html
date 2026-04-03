@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="shared.css"/>
+  <link rel="stylesheet" href="upload.css"/>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">Digital Vault</div>
+      <div class="brand-sub">Secure Cloud</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="files.html">
+        <i class="fas fa-folder-open"></i><span>Files</span>
+      </a>
+      <a class="nav-item active" href="upload.html">
+        <i class="fas fa-cloud-arrow-up"></i><span>Upload</span>
+      </a>
+      <a class="nav-item" href="storage.html">
+        <i class="fas fa-database"></i><span>Storage</span>
+      </a>
+      <a class="nav-item" href="settings.html">
+        <i class="fas fa-gear"></i><span>Settings</span>
+      </a>
+    </nav>
+    <a class="sidebar-upload-btn" href="upload.html">
+      <i class="fas fa-plus"></i><span>Upload File</span>
+    </a>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="storage-status-label">Storage Status</div>
+        <div class="storage-status-val" id="storageVal">45 MB / 100 MB</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width:45%"></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="user-info">
+          <div class="user-name" id="topbarUserName">Welcome, User123</div>
+          <div class="user-plan" id="topbarUserPlan">Pro Member</div>
+        </div>
+        <div class="user-avatar">🧑‍💼</div>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="upload-content">
+
+      <div class="upload-header">
+        <h2>Upload Files</h2>
+        <p>Encrypt and upload files securely to your Digital Vault.</p>
+      </div>
+
+      <div class="drop-zone-big" id="bigDropZone"
+           ondragover="onBigDragOver(event)"
+           ondragleave="onBigDragLeave()"
+           ondrop="onBigDrop(event)"
+           onclick="document.getElementById('bigFileInput').click()">
+        <i class="fas fa-cloud-arrow-up"></i>
+        <h3 id="bigDropLabel">Drag &amp; drop your file here</h3>
+        <small>or click to browse — files are encrypted automatically · max 50 MB</small>
+      </div>
+      <input type="file" id="bigFileInput" style="display:none" onchange="onBigFileSelected(this)"/>
+
+      <div class="upload-actions">
+        <button class="btn-primary" onclick="triggerUpload()">
+          <i class="fas fa-lock"></i> Encrypt &amp; Upload
+        </button>
+        <button class="btn-secondary" onclick="clearSelection()">Clear</button>
+      </div>
+
+      <div class="upload-info-grid">
+        <div class="upload-info-card">
+          <i class="fas fa-lock"></i>
+          <div>
+            <h4>AES-256 Encryption</h4>
+            <p>Every file is encrypted before leaving your device.</p>
+          </div>
+        </div>
+        <div class="upload-info-card">
+          <i class="fas fa-bolt"></i>
+          <div>
+            <h4>Fast Transfer</h4>
+            <p>Optimised upload pipeline with real-time progress tracking.</p>
+          </div>
+        </div>
+        <div class="upload-info-card">
+          <i class="fas fa-shield-halved"></i>
+          <div>
+            <h4>Zero-Knowledge</h4>
+            <p>Only you hold the decryption keys — never stored server-side.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="state.js"></script>
+<script src="upload.js"></script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Storage</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="shared.css"/>
+  <link rel="stylesheet" href="storage.css"/>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">Digital Vault</div>
+      <div class="brand-sub">Secure Cloud</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="files.html">
+        <i class="fas fa-folder-open"></i><span>Files</span>
+      </a>
+      <a class="nav-item" href="upload.html">
+        <i class="fas fa-cloud-arrow-up"></i><span>Upload</span>
+      </a>
+      <a class="nav-item active" href="storage.html">
+        <i class="fas fa-database"></i><span>Storage</span>
+      </a>
+      <a class="nav-item" href="settings.html">
+        <i class="fas fa-gear"></i><span>Settings</span>
+      </a>
+    </nav>
+    <a class="sidebar-upload-btn" href="upload.html">
+      <i class="fas fa-plus"></i><span>Upload File</span>
+    </a>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="storage-status-label">Storage Status</div>
+        <div class="storage-status-val" id="storageVal">45 MB / 100 MB</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width:45%"></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="user-info">
+          <div class="user-name" id="topbarUserName">Welcome, User123</div>
+          <div class="user-plan" id="topbarUserPlan">Pro Member</div>
+        </div>
+        <div class="user-avatar">🧑‍💼</div>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="storage-content">
+
+      <div class="storage-header">
+        <h2>Storage Analysis</h2>
+        <p>You have used <strong>128.4 GB</strong> of your 256 GB total capacity.</p>
+      </div>
+
+      <div class="storage-grid">
+
+        <!-- Donut chart card -->
+        <div class="donut-card">
+          <div class="donut-wrap">
+            <svg width="180" height="180" viewBox="0 0 180 180">
+              <circle class="donut-bg"   cx="90" cy="90" r="80"/>
+              <circle class="donut-fill" cx="90" cy="90" r="80" id="donutFill"/>
+            </svg>
+            <div class="donut-label">
+              <div class="donut-pct">50.2%</div>
+              <div class="donut-sub">Occupied</div>
+            </div>
+          </div>
+
+          <div class="donut-legend">
+            <div class="legend-row">
+              <div><span class="legend-dot blue"></span><span class="legend-label">Encrypted Data</span></div>
+              <span class="legend-val">128.4 GB</span>
+            </div>
+            <div class="legend-row">
+              <div><span class="legend-dot gray"></span><span class="legend-label">Available</span></div>
+              <span class="legend-val">127.6 GB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown card -->
+        <div class="breakdown-card">
+          <div class="breakdown-title">
+            <i class="fas fa-chart-pie"></i> Detailed Breakdown
+          </div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-row">
+              <div class="breakdown-info">
+                <div class="breakdown-icon doc"><i class="fas fa-file-lines"></i></div>
+                <div>
+                  <div class="breakdown-name">Documents</div>
+                  <div class="breakdown-count">4,210 files</div>
+                </div>
+              </div>
+              <div class="breakdown-size">45.2 GB</div>
+            </div>
+            <div class="breakdown-bar">
+              <div class="breakdown-bar-fill bar-blue" style="width:35%"></div>
+            </div>
+          </div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-row">
+              <div class="breakdown-info">
+                <div class="breakdown-icon photo"><i class="fas fa-images"></i></div>
+                <div>
+                  <div class="breakdown-name">Photos &amp; Media</div>
+                  <div class="breakdown-count">12,842 files</div>
+                </div>
+              </div>
+              <div class="breakdown-size">62.8 GB</div>
+            </div>
+            <div class="breakdown-bar">
+              <div class="breakdown-bar-fill bar-purple" style="width:49%"></div>
+            </div>
+          </div>
+
+          <div class="breakdown-item">
+            <div class="breakdown-row">
+              <div class="breakdown-info">
+                <div class="breakdown-icon back"><i class="fas fa-clock-rotate-left"></i></div>
+                <div>
+                  <div class="breakdown-name">System Backups</div>
+                  <div class="breakdown-count">3 archived nodes</div>
+                </div>
+              </div>
+              <div class="breakdown-size">20.4 GB</div>
+            </div>
+            <div class="breakdown-bar">
+              <div class="breakdown-bar-fill bar-green" style="width:16%"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="state.js"></script>
+<script src="storage.js"></script>
+</body>
+</html>

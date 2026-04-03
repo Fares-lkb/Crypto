@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="login.css"/>
+</head>
+<body>
+
+  <div class="login-page">
+
+    <div class="login-brand">
+      <div class="login-icon"><i class="fas fa-shield-halved"></i></div>
+      <div class="login-title">Secure Cloud</div>
+      <div class="login-subtitle">Create Your Vault</div>
+    </div>
+
+    <div class="login-card">
+      <div class="login-card-title">New Vault Account</div>
+      <p class="login-card-sub">Choose a username and strong password. Your RSA key pair will be generated automatically.</p>
+
+      <div class="field-group">
+        <label class="field-label">Username</label>
+        <div class="input-wrap">
+          <span class="input-icon"><i class="fas fa-user"></i></span>
+          <input type="text" id="regUsername" placeholder="your_username"/>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon"><i class="fas fa-key"></i></span>
+          <input type="password" id="regPass" placeholder="Min 12 chars, upper, lower, digit, symbol"/>
+          <button class="eye-btn" onclick="togglePassword()" type="button">
+            <i class="fas fa-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+        <div class="field-error" id="fieldError"></div>
+      </div>
+
+      <button class="btn-enter-vault" onclick="registerVault()">
+        Create Vault <i class="fas fa-vault"></i>
+      </button>
+
+      <p style="margin-top:18px;text-align:center;font-size:13px;color:#475569">
+        Already have an account? <a href="login.html" style="color:#2563eb;font-weight:700">Sign in</a>
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Key download modal -->
+  <div id="keyModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:600;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;padding:32px;max-width:500px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.2)">
+      <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a">Save Your Private Key</h2>
+      <p style="font-size:13px;color:#ef4444;font-weight:600;margin:0 0 16px">⚠ This key is shown ONCE. If you lose it you cannot decrypt your files.</p>
+      <textarea id="keyDisplay" readonly style="width:100%;height:160px;font-family:monospace;font-size:11px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px;resize:none"></textarea>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button onclick="downloadKey()" style="flex:1;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-family:inherit">
+          <i class="fas fa-download"></i> Download Key File
+        </button>
+        <button onclick="proceedToLogin()" style="flex:1;padding:12px;background:#0f172a;color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-family:inherit">
+          I saved it — Continue
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="register.js"></script>
+</body>
+</html>

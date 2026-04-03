@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="shared.css"/>
+  <link rel="stylesheet" href="settings.css"/>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">Digital Vault</div>
+      <div class="brand-sub">Secure Cloud</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="files.html">
+        <i class="fas fa-folder-open"></i><span>Files</span>
+      </a>
+      <a class="nav-item" href="upload.html">
+        <i class="fas fa-cloud-arrow-up"></i><span>Upload</span>
+      </a>
+      <a class="nav-item" href="storage.html">
+        <i class="fas fa-database"></i><span>Storage</span>
+      </a>
+      <a class="nav-item active" href="settings.html">
+        <i class="fas fa-gear"></i><span>Settings</span>
+      </a>
+    </nav>
+    <a class="sidebar-upload-btn" href="upload.html">
+      <i class="fas fa-plus"></i><span>Upload File</span>
+    </a>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="storage-status-label">Storage Status</div>
+        <div class="storage-status-val" id="storageVal">45 MB / 100 MB</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width:45%"></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="user-info">
+          <div class="user-name" id="topbarUserName">Welcome, User123</div>
+          <div class="user-plan" id="topbarUserPlan">Pro Member</div>
+        </div>
+        <div class="user-avatar">🧑‍💼</div>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="settings-content">
+
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <p>Manage your Digital Vault account configuration.</p>
+      </div>
+
+      <div class="settings-layout">
+
+        <!-- Left: Categories -->
+        <div class="settings-categories">
+          <h4>Categories</h4>
+          <div class="settings-cat-item active" data-cat="profile" onclick="switchCat('profile')">
+            Account Profile <i class="fas fa-chevron-right"></i>
+          </div>
+        
+        </div>
+
+        <!-- Right: Panels -->
+        <div class="settings-panels">
+
+          <!-- ── Profile Panel ── -->
+          <div id="profilePanel" class="settings-panel">
+            <div class="panel-header">
+              <h3>Profile Information</h3>
+              <span class="update-link" onclick="saveProfile()">Update Info</span>
+            </div>
+
+            <div class="profile-identity">
+              <div class="profile-avatar-wrap">
+                <div class="profile-avatar">🧑‍💼</div>
+                <div class="edit-avatar-btn"><i class="fas fa-pen"></i></div>
+              </div>
+              <div class="profile-name-block">
+                <h3 id="displayName">Alexander Sterling</h3>
+                <p  id="displayEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="345558514c555a5051461a4255415840744751574146511a575b59">[email&#160;protected]</a></p>
+                <span class="plan-badge">Enterprise Plan</span>
+              </div>
+            </div>
+
+            <div class="profile-fields">
+              <div class="profile-field">
+                <label>Full Name</label>
+                <input type="text"  id="profileName"  value="Alexander Sterling"/>
+              </div>
+              <div class="profile-field">
+                <label>Work Email</label>
+                <input type="email" id="profileEmail" value="alexander.vault@secure.com"/>
+              </div>
+              <div class="profile-field">
+                <label>Organization</label>
+                <input type="text"  id="profileOrg"   value="Sterling Enterprises"/>
+              </div>
+              <div class="profile-field">
+                <label>Member Since</label>
+                <input type="text"  value="January 2022" readonly class="readonly-field"/>
+              </div>
+            </div>
+
+            <div class="danger-zone">
+              <div class="danger-zone-text">
+                <h4>Deactivate Account</h4>
+                <p>Permanently removes all vault data and terminates access.</p>
+              </div>
+              <button class="btn-danger" onclick="deleteVault()">
+                <i class="fas fa-trash"></i> Delete Vault
+              </button>
+            </div>
+          </div>
+
+          
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+</

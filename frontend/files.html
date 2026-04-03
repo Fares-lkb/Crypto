@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Files</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="shared.css"/>
+  <link rel="stylesheet" href="files.css"/>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">Digital Vault</div>
+      <div class="brand-sub">Secure Cloud</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" href="files.html">
+        <i class="fas fa-folder-open"></i><span>Files</span>
+      </a>
+      <a class="nav-item" href="upload.html">
+        <i class="fas fa-cloud-arrow-up"></i><span>Upload</span>
+      </a>
+      <a class="nav-item" href="storage.html">
+        <i class="fas fa-database"></i><span>Storage</span>
+      </a>
+      <a class="nav-item" href="settings.html">
+        <i class="fas fa-gear"></i><span>Settings</span>
+      </a>
+    </nav>
+    <a class="sidebar-upload-btn" href="upload.html">
+      <i class="fas fa-plus"></i><span>Upload File</span>
+    </a>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="storage-status-label">Storage Status</div>
+        <div class="storage-status-val" id="storageVal">45 MB / 100 MB</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width:45%"></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="user-info">
+          <div class="user-name" id="topbarUserName">Welcome, User123</div>
+          <div class="user-plan" id="topbarUserPlan">Pro Member</div>
+        </div>
+        <div class="user-avatar">🧑‍💼</div>
+        <button class="btn-logout" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="files-content">
+
+      <button class="btn-upload-main" onclick="openModal()">
+        <i class="fas fa-plus"></i> Upload File
+      </button>
+
+      <div class="table-section">
+        <div class="table-title">Your Encrypted Files</div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Size</th>
+                <th>Date Uploaded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fileTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="pagination">
+        <button class="page-btn" id="prevBtn" onclick="changePage(-1)">
+          <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <div class="page-number" id="pageNum">1</div>
+        <div class="page-of"    id="pageOf">of 3</div>
+        <button class="page-btn" id="nextBtn" onclick="changePage(1)">
+          Next <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Upload Encrypted File</div>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="drop-zone" id="dropZone"
+         ondragover="onDragOver(event)" ondragleave="onDragLeave()"
+         ondrop="onDrop(event)"
+         onclick="document.getElementById('fileInput').click()">
+      <i class="fas fa-cloud-arrow-up"></i>
+      <p id="dropLabel">Drag &amp; drop your file here</p>
+      <small>or click to browse — max 50 MB</small>
+    </div>
+    <input type="file" id="fileInput" style="display:none" onchange="onFileSelected(this)"/>
+    <div class="modal-actions">
+      <button class="btn-cancel"         onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm-upload" onclick="confirmUpload()">Upload</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="state.js"></script>
+<script src="files.js"></script>
+</body>
+</html>
