@@ -16,7 +16,7 @@ class DatabaseConfig:
             port=os.getenv('DB_PORT', '5432'),
             database=os.getenv('DB_NAME', 'secure_cloud'),
             user=os.getenv('DB_USER', 'postgres'),
-            password=os.getenv('DB_PASSWORD', 'passkey')
+            password=os.getenv('DB_PASSWORD', 'nabil')
         )
     
     def get_connection(self):

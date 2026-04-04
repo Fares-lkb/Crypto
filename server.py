@@ -232,6 +232,11 @@ def upload_file():
     private_key_pem = _b64dec(private_key_b64)
     file_data       = uploaded_file.read()
 
+    #check if the file exists already
+    existing = storage_manager.get_file(username, os.path.basename(uploaded_file.filename) + '.enc')
+    if existing:
+        return jsonify({'success': False, 'message': 'File name already exists. Use a different name or delete it'}), 409
+
     # Check quota before processing
     available = storage_manager.get_available_space(username)
     if available is not None and len(file_data) > available:

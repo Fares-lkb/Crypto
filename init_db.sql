@@ -1,0 +1,52 @@
+CREATE DATABASE secure_cloud;
+\c secure_cloud
+
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  salt TEXT NOT NULL,
+  public_key TEXT NOT NULL,
+  storage_quota BIGINT NOT NULL DEFAULT 104857600,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE storage_usage (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  used_space BIGINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE files (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,
+  file_path TEXT NOT NULL,
+  file_size BIGINT NOT NULL,
+  file_hash TEXT NOT NULL,
+  signature TEXT,
+  uploaded_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE encrypted_keys (
+  id SERIAL PRIMARY KEY,
+  file_id INT NOT NULL UNIQUE REFERENCES files(id) ON DELETE CASCADE,
+  encrypted_aes_key TEXT NOT NULL
+);
+
+CREATE TABLE nonces (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  nonce TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  used BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE logs (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  action VARCHAR(50) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  ip_address VARCHAR(64),
+  timestamp TIMESTAMP NOT NULL DEFAULT NOW()
+);
