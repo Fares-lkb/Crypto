@@ -147,3 +147,11 @@ async function confirmUpload() {
     showToast('Upload failed — is the server running?', 'error');
   }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTopbar();
+
+  document.getElementById('uploadModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+});

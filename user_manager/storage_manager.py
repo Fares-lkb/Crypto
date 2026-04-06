@@ -1,3 +1,6 @@
+from importlib.resources import files
+from unittest import result
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
@@ -145,6 +148,34 @@ class StorageManager:
     
     def get_storage_stats(self, username):
         """Get complete storage statistics"""
+
+        files = self.get_user_files(username)
+        
+        categories = {
+            'documents': ['pdf', 'doc', 'docx', 'txt', 'xlsx', 'xls', 'ppt', 'pptx', 'odt', 'csv', 'rtf'],
+            'images': ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico', 'tiff'],
+            'videos': ['mp4', 'avi', 'mov', 'mkv', 'webm', 'flv', 'wmv', 'mpg', 'mpeg'],
+            'audio': ['mp3', 'wav', 'flac', 'aac', 'm4a', 'wma', 'ogg'],
+            'archives': ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'],
+            'code': ['js', 'py', 'java', 'cpp', 'c', 'h', 'html', 'css', 'php', 'go', 'rs', 'rb', 'sh'],
+        }
+
+        category_stats = {cat: {'count': 0, 'size': 0} for cat in categories}
+
+        for f in files:
+            # result.append({
+            #     'id':       f['id'],
+            #     'name':     f['file_name'],
+            #     'size_bytes': f['file_size'],
+            #     'date':     str(f['uploaded_at'])[:10],
+            #     'hash':     f['file_hash'],
+            # })
+            extension = f['file_name'].split('.')[-2].lower()
+            for category, extensions in categories.items():
+                if extension in extensions:
+                    category_stats[category]['count'] += 1
+                    category_stats[category]['size'] += f['file_size']
+
         return {
             'quota': self.get_user_quota(username),
             'quota_readable': self.get_user_quota_readable(username),
@@ -152,7 +183,8 @@ class StorageManager:
             'used_readable': self.get_used_space_readable(username),
             'available': self.get_available_space(username),
             'available_readable': self.get_available_space_readable(username),
-            'usage_percentage': self.get_storage_usage_percentage(username)
+            'usage_percentage': self.get_storage_usage_percentage(username),
+            'category_stats': category_stats
         }
     
     # ==================== FILE TRACKING ====================

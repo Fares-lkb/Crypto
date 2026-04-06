@@ -51,10 +51,10 @@ function renderTable() {
       <td class="file-date">${f.date}</td>
       <td>
         <div class="actions-cell">
-          <button class="btn-action btn-download" onclick="handleDownload('${f.name}')">
+          <button class="btn-action btn-download" onclick="handleDownload(&quot;${f.name}&quot;)">
             <i class="fas fa-download"></i> Download
           </button>
-          <button class="btn-action btn-delete" onclick="handleDelete('${f.name}')">
+          <button class="btn-action btn-delete" onclick="handleDelete(&quot;${f.name}&quot;)">
             <i class="fas fa-trash"></i> Delete
           </button>
         </div>
