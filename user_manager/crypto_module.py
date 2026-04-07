@@ -49,7 +49,7 @@ def decrypt_file_aes(encrypted_data, aes_key):
 def encrypt_aes_key_rsa(aes_key, rsa_public_key):
     public_key = RSA.import_key(rsa_public_key)
 
-    cipher_rsa = PKCS1_OAEP.new(public_key)
+    cipher_rsa = PKCS1_OAEP.new(public_key, hashAlgo=SHA256)
 
     encrypted_key = cipher_rsa.encrypt(aes_key)
 
@@ -61,7 +61,7 @@ def encrypt_aes_key_rsa(aes_key, rsa_public_key):
 def decrypt_aes_key_rsa(encrypted_key, rsa_private_key):
     private_key = RSA.import_key(rsa_private_key)
 
-    cipher_rsa = PKCS1_OAEP.new(private_key)
+    cipher_rsa = PKCS1_OAEP.new(private_key, hashAlgo=SHA256)
 
     aes_key = cipher_rsa.decrypt(encrypted_key)
 

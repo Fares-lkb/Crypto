@@ -11,9 +11,8 @@ let _allFiles = [];
 
 /* ── Load files from API ── */
 async function loadFiles() {
-  const username = sessionStorage.getItem('vaultUser');
   try {
-    const res  = await fetch(`${API}/api/files?username=${encodeURIComponent(username)}`);
+    const res  = await fetch(`${API}/api/files`, { headers: getAuthHeaders() });
     const data = await res.json();
     if (data.success) {
       _allFiles = data.files;
@@ -77,32 +76,43 @@ function changePage(dir) {
 
 /* ── Download ── */
 async function handleDownload(name) {
-  const username      = sessionStorage.getItem('vaultUser');
-  const privateKeyB64 = sessionStorage.getItem('vaultPrivateKey');
-  if (!privateKeyB64) {
+  const privateKeyPem = getPrivateKeyPem();
+  if (!privateKeyPem) {
     showToast('Private key not found in session. Re-login required.', 'error');
     return;
   }
   try {
-    const url = `${API}/api/files/download/${encodeURIComponent(name)}?username=${encodeURIComponent(username)}&private_key_b64=${encodeURIComponent(privateKeyB64)}`;
-    const res = await fetch(url);
-    if (!res.ok) { const d = await res.json(); showToast(d.message, 'error'); return; }
-    const blob  = await res.blob();
-    const a     = document.createElement('a');
-    a.href      = URL.createObjectURL(blob);
-    a.download  = name.replace('.enc', '');
+    const res = await fetch(`${API}/api/files/download/${encodeURIComponent(name)}`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await res.json();
+    if (!data.success) { showToast(data.message || 'Download failed', 'error'); return; }
+
+    const result = await window.CryptoModule.decryptAndVerifyPackage(data, privateKeyPem);
+    if (!result.hashOk || !result.signatureOk) {
+      showToast('Integrity/signature check failed. Download aborted.', 'error');
+      return;
+    }
+
+    const blob = new Blob([result.plainBytes]);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = result.filename || name.replace('.enc', '');
     a.click();
+
     showToast(`${name} downloaded and decrypted.`, 'success');
-  } catch (_) {
-    showToast('Download failed — is the server running?', 'error');
+  } catch (e) {
+    showToast(e?.message || 'Download/decryption failed.', 'error');
   }
 }
 
 /* ── Delete ── */
 async function handleDelete(name) {
-  const username = sessionStorage.getItem('vaultUser');
   try {
-    const res  = await fetch(`${API}/api/files/${encodeURIComponent(name)}?username=${encodeURIComponent(username)}`, { method: 'DELETE' });
+    const res  = await fetch(`${API}/api/files/${encodeURIComponent(name)}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
     const data = await res.json();
     if (data.success) {
       showToast(`${name} deleted.`, 'error');

@@ -5,9 +5,8 @@
 requireAuth();
 
 async function loadStorageStats() {
-  const username = sessionStorage.getItem('vaultUser');
   try {
-    const res  = await fetch(`${API}/api/storage/stats?username=${encodeURIComponent(username)}`);
+    const res  = await fetch(`${API}/api/storage/stats`, { headers: getAuthHeaders() });
     const data = await res.json();
     if (!data.success) return;
 

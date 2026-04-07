@@ -7,6 +7,29 @@
 /* ── API base URL ── */
 const API = 'http://127.0.0.1:5000';
 
+function getAuthHeaders() {
+  const token = sessionStorage.getItem('vaultToken');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function getPrivateKeyPem() {
+  const privateKeyB64 = sessionStorage.getItem('vaultPrivateKey');
+  return privateKeyB64 ? atob(privateKeyB64) : null;
+}
+
+async function signFileWithPrivateKey(file) {
+  if (!window.CryptoModule) {
+    throw new Error('Crypto library missing. Refresh page and retry.');
+  }
+
+  const pem = getPrivateKeyPem();
+  if (!pem) {
+    throw new Error('Private key missing in session.');
+  }
+
+  return await window.CryptoModule.signFileFromFile(file, pem);
+}
+
 /* ── File list now comes from the real API (see files.js) ── */
 function getFiles() {
   const raw = sessionStorage.getItem('vaultFiles');
@@ -19,7 +42,7 @@ function saveFiles(files) {
 
 /* ── Auth guard: redirect to login if not authenticated ── */
 function requireAuth() {
-  if (!sessionStorage.getItem('vaultUser')) {
+  if (!sessionStorage.getItem('vaultUser') || !sessionStorage.getItem('vaultToken')) {
     window.location.href = 'login.html';
   }
 }
@@ -39,11 +62,10 @@ function initTopbar() {
 
 /* ── Fetch real storage stats from API ── */
 async function updateStorageBar() {
-  const username = sessionStorage.getItem('vaultUser');
-  if (!username) return;
+  if (!sessionStorage.getItem('vaultToken')) return;
 
   try {
-    const res  = await fetch(`${API}/api/storage/stats?username=${encodeURIComponent(username)}`);
+    const res  = await fetch(`${API}/api/storage/stats`, { headers: getAuthHeaders() });
     const data = await res.json();
     if (!data.success) return;
 
@@ -62,6 +84,8 @@ async function updateStorageBar() {
 function logout() {
   sessionStorage.removeItem('vaultUser');
   sessionStorage.removeItem('vaultPrivateKey');
+  sessionStorage.removeItem('vaultToken');
+  sessionStorage.removeItem('vaultPlan');
   window.location.href = 'login.html';
 }
 
@@ -117,22 +141,19 @@ function _selectModalFile(file) {
 async function confirmUpload() {
   if (!_pendingFile) { showToast('Please select a file first.', 'error'); return; }
 
-  const username      = sessionStorage.getItem('vaultUser');
-  const privateKeyB64 = sessionStorage.getItem('vaultPrivateKey');
-
-  if (!privateKeyB64) {
-    showToast('Private key missing — please re-register or re-login.', 'error');
-    return;
-  }
-
   showToast('Encrypting and uploading…', 'success');
-  const formData = new FormData();
-  formData.append('username',        username);
-  formData.append('private_key_b64', privateKeyB64);
-  formData.append('file',            _pendingFile);
 
   try {
-    const res  = await fetch(`${API}/api/files/upload`, { method: 'POST', body: formData });
+    const signatureB64 = await signFileWithPrivateKey(_pendingFile);
+    const formData = new FormData();
+    formData.append('signature_b64', signatureB64);
+    formData.append('file', _pendingFile);
+
+    const res  = await fetch(`${API}/api/files/upload`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData,
+    });
     const data = await res.json();
     closeModal();
     if (data.success) {
@@ -143,7 +164,7 @@ async function confirmUpload() {
     } else {
       showToast(data.message, 'error');
     }
-  } catch (_) {
-    showToast('Upload failed — is the server running?', 'error');
+  } catch (e) {
+    showToast(e?.message || 'Upload failed.', 'error');
   }
 }

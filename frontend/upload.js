@@ -38,23 +38,19 @@ async function triggerUpload() {
     return;
   }
 
-  const username      = sessionStorage.getItem('vaultUser');
-  const privateKeyB64 = sessionStorage.getItem('vaultPrivateKey');
-
-  if (!privateKeyB64) {
-    showToast('Private key missing — please re-register or re-login.', 'error');
-    return;
-  }
-
   showToast('Encrypting and uploading…', 'success');
 
-  const formData = new FormData();
-  formData.append('username',        username);
-  formData.append('private_key_b64', privateKeyB64);
-  formData.append('file',            _bigFile);
-
   try {
-    const res  = await fetch(`${API}/api/files/upload`, { method: 'POST', body: formData });
+    const signatureB64 = await signFileWithPrivateKey(_bigFile);
+    const formData = new FormData();
+    formData.append('signature_b64', signatureB64);
+    formData.append('file', _bigFile);
+
+    const res  = await fetch(`${API}/api/files/upload`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData,
+    });
     const data = await res.json();
     if (data.success) {
       showToast(`${_bigFile.name} encrypted & uploaded!`, 'success');
@@ -64,8 +60,8 @@ async function triggerUpload() {
     } else {
       showToast(data.message, 'error');
     }
-  } catch (_) {
-    showToast('Upload failed — is the server running?', 'error');
+  } catch (e) {
+    showToast(e?.message || 'Upload failed.', 'error');
   }
 }
 

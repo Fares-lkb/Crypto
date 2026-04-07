@@ -39,8 +39,6 @@ async function registerVault() {
     /* Store private key in sessionStorage for demo; show key modal */
     _generatedPrivateKey = data.private_key;
     const b64 = btoa(_generatedPrivateKey);
-    sessionStorage.setItem('vaultUser',       data.username || username);
-    sessionStorage.setItem('vaultPlan',       'Secure Member');
     sessionStorage.setItem('vaultPrivateKey', b64);
 
     document.getElementById('keyDisplay').value = _generatedPrivateKey;
@@ -61,7 +59,7 @@ function downloadKey() {
 }
 
 function proceedToLogin() {
-  window.location.href = 'files.html';
+  window.location.href = 'login.html';
 }
 
 /* Toast */

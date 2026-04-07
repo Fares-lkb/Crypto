@@ -9,7 +9,7 @@ function _pemToBase64(pemText) {
 }
 
 /* Redirect to files if already logged in */
-if (sessionStorage.getItem('vaultUser')) {
+if (sessionStorage.getItem('vaultUser') && sessionStorage.getItem('vaultToken')) {
   window.location.href = 'files.html';
 }
 
@@ -90,6 +90,7 @@ async function enterVault() {
 
     sessionStorage.setItem('vaultUser', verData.username);
     sessionStorage.setItem('vaultPlan', 'Secure Member');
+    sessionStorage.setItem('vaultToken', verData.auth_token || '');
     sessionStorage.setItem('vaultPrivateKey', _pemToBase64(privateKeyPem));
     window.location.href = 'files.html';
 

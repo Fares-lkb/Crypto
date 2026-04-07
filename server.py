@@ -6,7 +6,9 @@ Connects the frontend to UserManager, StorageManager, NonceManager, crypto_modul
 import os
 import base64
 import functools
-from flask import Flask, request, jsonify, send_file
+import secrets
+from datetime import datetime, timedelta
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import io
 
@@ -30,9 +32,9 @@ from Crypto.Signature import pkcs1_15
 app = Flask(__name__)
 CORS(app)  # allow browser requests from file:// or different port
 
-# Demo fallback: allow login when frontend cannot generate RSA signatures yet.
-# Set to "0" in environment to enforce strict signature-only authentication.
-ALLOW_DEMO_SIGNATURE_BYPASS = os.getenv('ALLOW_DEMO_SIGNATURE_BYPASS', '0') == '1'
+# In-memory auth token store for API authorization
+TOKEN_TTL_MINUTES = int(os.getenv('TOKEN_TTL_MINUTES', '120'))
+AUTH_TOKENS = {}
 
 user_manager    = UserManager()
 storage_manager = StorageManager()
@@ -40,6 +42,7 @@ nonce_manager   = NonceManager()
 
 CLOUD_DIR = os.path.join(os.path.dirname(__file__), 'cloud')
 os.makedirs(CLOUD_DIR, exist_ok=True)
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), 'frontend')
 
 # ──────────────────────────────────────────
 # Helpers
@@ -56,6 +59,39 @@ def _b64enc(data: bytes) -> str:
 def _b64dec(s: str) -> bytes:
     return base64.b64decode(s)
 
+def _create_auth_token(username: str) -> str:
+    token = secrets.token_urlsafe(48)
+    AUTH_TOKENS[token] = {
+        'username': username,
+        'expires_at': datetime.utcnow() + timedelta(minutes=TOKEN_TTL_MINUTES),
+    }
+    return token
+
+def _extract_auth_username():
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return None
+
+    token = auth_header[len('Bearer '):].strip()
+    session = AUTH_TOKENS.get(token)
+    if not session:
+        return None
+
+    if datetime.utcnow() > session['expires_at']:
+        AUTH_TOKENS.pop(token, None)
+        return None
+
+    return session['username']
+
+def _require_auth(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        username = _extract_auth_username()
+        if not username:
+            return jsonify({'success': False, 'message': 'Authentication required'}), 401
+        return fn(username, *args, **kwargs)
+    return wrapper
+
 def _require_json(*fields):
     """Decorator: parse JSON body and ensure required fields are present."""
     def decorator(fn):
@@ -68,6 +104,18 @@ def _require_json(*fields):
             return fn(data, *args, **kwargs)
         return wrapper
     return decorator
+
+
+@app.route('/')
+def frontend_index():
+    return send_from_directory(FRONTEND_DIR, 'login.html')
+
+
+@app.route('/<path:filename>')
+def frontend_assets(filename):
+    if os.path.isfile(os.path.join(FRONTEND_DIR, filename)):
+        return send_from_directory(FRONTEND_DIR, filename)
+    return jsonify({'success': False, 'message': 'Not found'}), 404
 
 # ──────────────────────────────────────────
 # 1. REGISTER
@@ -167,19 +215,14 @@ def login_verify(data):
         valid_sig = False
 
     if not valid_sig:
-        demo_sig_ok = False
-        try:
-            demo_sig_ok = _b64dec(sig_b64).decode('utf-8') in {'demo-signature', 'no-key'}
-        except Exception:
-            demo_sig_ok = False
-
-        if not (ALLOW_DEMO_SIGNATURE_BYPASS and demo_sig_ok):
-            user_manager.record_failed_login(username)
-            return jsonify({'success': False, 'message': 'Signature verification failed'}), 401
+        user_manager.record_failed_login(username)
+        return jsonify({'success': False, 'message': 'Signature verification failed'}), 401
 
     user_manager.reset_failed_login_count(username)
 
-    return jsonify({'success': True, 'message': 'Authenticated', 'username': username})
+    auth_token = _create_auth_token(username)
+
+    return jsonify({'success': True, 'message': 'Authenticated', 'username': username, 'auth_token': auth_token})
 
 
 # ──────────────────────────────────────────
@@ -188,10 +231,8 @@ def login_verify(data):
 # Returns: { success, files: [...] }
 # ──────────────────────────────────────────
 @app.route('/api/files', methods=['GET'])
-def list_files():
-    username = request.args.get('username', '').strip()
-    if not username:
-        return jsonify({'success': False, 'message': 'username required'}), 400
+@_require_auth
+def list_files(username):
 
     files = storage_manager.get_user_files(username)
     result = []
@@ -212,25 +253,34 @@ def list_files():
 # 5. UPLOAD
 # POST /api/files/upload
 # Body: multipart/form-data
-#   username, private_key_b64 (PEM base64), file (binary)
+#   file (binary), signature_b64 (RSA signature generated client-side)
 # Server encrypts with hybrid scheme, stores .enc file + encrypted AES key
 # ──────────────────────────────────────────
 @app.route('/api/files/upload', methods=['POST'])
-def upload_file():
-    username        = request.form.get('username', '').strip()
-    private_key_b64 = request.form.get('private_key_b64', '')
-    uploaded_file   = request.files.get('file')
+@_require_auth
+def upload_file(username):
+    signature_b64 = request.form.get('signature_b64', '')
+    uploaded_file = request.files.get('file')
 
-    if not username or not private_key_b64 or not uploaded_file:
-        return jsonify({'success': False, 'message': 'username, private_key_b64 and file are required'}), 400
+    if not signature_b64 or not uploaded_file:
+        return jsonify({'success': False, 'message': 'signature_b64 and file are required'}), 400
 
     # Get receiver public key from DB
     public_key_pem = user_manager.get_public_key(username)
     if not public_key_pem:
         return jsonify({'success': False, 'message': 'User not found'}), 404
 
-    private_key_pem = _b64dec(private_key_b64)
     file_data       = uploaded_file.read()
+
+    # Signature is produced client-side; server only verifies it.
+    try:
+        signature_bytes = _b64dec(signature_b64)
+        signature_ok = verify_signature(file_data, signature_bytes, public_key_pem.encode('utf-8'))
+    except Exception:
+        signature_ok = False
+
+    if not signature_ok:
+        return jsonify({'success': False, 'message': 'Invalid file signature'}), 401
 
     # Check quota before processing
     available = storage_manager.get_available_space(username)
@@ -242,13 +292,13 @@ def upload_file():
     enc_result    = encrypt_file_aes(file_data, aes_key)
     enc_aes_key   = encrypt_aes_key_rsa(aes_key, public_key_pem.encode('utf-8'))
     file_hash     = compute_file_hash(file_data)
-    signature     = sign_file(file_data, private_key_pem)
 
     # Pack ciphertext: nonce(16) + tag(16) + ciphertext
     blob = enc_result['nonce'] + enc_result['tag'] + enc_result['ciphertext']
 
     # Save to disk
-    safe_name  = os.path.basename(uploaded_file.filename) + '.enc'
+    incoming_name = uploaded_file.filename or 'uploaded_file'
+    safe_name  = os.path.basename(incoming_name) + '.enc'
     user_dir   = _user_dir(username)
     file_path  = os.path.join(user_dir, safe_name)
     with open(file_path, 'wb') as fh:
@@ -261,7 +311,7 @@ def upload_file():
         file_path=file_path,
         file_size=len(blob),
         file_hash=_b64enc(file_hash),
-        signature=_b64enc(signature),
+        signature=signature_b64,
     )
     if not reg['success']:
         os.remove(file_path)
@@ -275,16 +325,12 @@ def upload_file():
 
 # ──────────────────────────────────────────
 # 6. DOWNLOAD
-# GET /api/files/download/<filename>?username=xxx&private_key_b64=xxx
-# Returns decrypted file binary
+# GET /api/files/download/<filename>
+# Returns encrypted package for client-side decryption
 # ──────────────────────────────────────────
 @app.route('/api/files/download/<filename>', methods=['GET'])
-def download_file(filename):
-    username        = request.args.get('username', '').strip()
-    private_key_b64 = request.args.get('private_key_b64', '')
-
-    if not username or not private_key_b64:
-        return jsonify({'success': False, 'message': 'username and private_key_b64 required'}), 400
+@_require_auth
+def download_file(username, filename):
 
     file_meta = storage_manager.get_file(username, filename)
     if not file_meta:
@@ -309,52 +355,27 @@ def download_file(filename):
     if not enc_aes_key_b64:
         return jsonify({'success': False, 'message': 'Encrypted key not found'}), 404
 
-    private_key_pem = _b64dec(private_key_b64)
-    enc_aes_key     = _b64dec(enc_aes_key_b64)
-
-    try:
-        aes_key      = decrypt_aes_key_rsa(enc_aes_key, private_key_pem)
-        plain_data   = decrypt_file_aes({'nonce': nonce, 'tag': tag, 'ciphertext': ciphertext}, aes_key)
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'Decryption failed: {str(e)}'}), 400
-
-    # Verify integrity
     public_key_pem = user_manager.get_public_key(username)
-    sig_b64        = file_meta.get('signature')
-    integrity_ok   = False
-    signature_ok   = False
-
-    stored_hash = _b64dec(file_meta['file_hash']) if file_meta.get('file_hash') else None
-    if stored_hash:
-        integrity_ok = verify_file_integrity(plain_data, stored_hash)
-
-    if sig_b64 and public_key_pem:
-        try:
-            signature_ok = verify_signature(plain_data, _b64dec(sig_b64), public_key_pem.encode('utf-8'))
-        except Exception:
-            signature_ok = False
-
     original_name = filename.replace('.enc', '') if filename.endswith('.enc') else filename
 
-    response = send_file(
-        io.BytesIO(plain_data),
-        as_attachment=True,
-        download_name=original_name,
-    )
-    response.headers['X-Integrity-OK']  = str(integrity_ok)
-    response.headers['X-Signature-OK']  = str(signature_ok)
-    return response
+    return jsonify({
+        'success': True,
+        'filename': original_name,
+        'blob_b64': _b64enc(blob),
+        'enc_aes_key_b64': enc_aes_key_b64,
+        'file_hash_b64': file_meta.get('file_hash'),
+        'signature_b64': file_meta.get('signature'),
+        'public_key': public_key_pem,
+    })
 
 
 # ──────────────────────────────────────────
 # 7. DELETE FILE
-# DELETE /api/files/<filename>?username=xxx
+# DELETE /api/files/<filename>
 # ──────────────────────────────────────────
 @app.route('/api/files/<filename>', methods=['DELETE'])
-def delete_file(filename):
-    username = request.args.get('username', '').strip()
-    if not username:
-        return jsonify({'success': False, 'message': 'username required'}), 400
+@_require_auth
+def delete_file(username, filename):
 
     # Remove from disk
     user_dir  = _user_dir(username)
@@ -371,13 +392,11 @@ def delete_file(filename):
 
 # ──────────────────────────────────────────
 # 8. STORAGE STATS
-# GET /api/storage/stats?username=xxx
+# GET /api/storage/stats
 # ──────────────────────────────────────────
 @app.route('/api/storage/stats', methods=['GET'])
-def storage_stats():
-    username = request.args.get('username', '').strip()
-    if not username:
-        return jsonify({'success': False, 'message': 'username required'}), 400
+@_require_auth
+def storage_stats(username):
 
     stats = storage_manager.get_storage_stats(username)
     return jsonify({'success': True, **stats})
@@ -396,4 +415,4 @@ def _fmt_size(b):
 
 if __name__ == '__main__':
     port = int(os.getenv('API_PORT', 5000))
-    app.run(host='127.0.0.1', port=port, debug=True)
+    app.run(host='127.0.0.1', port=port, debug=False)
