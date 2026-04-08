@@ -123,7 +123,7 @@ class UserManager:
         if not (has_upper and has_lower and has_digit and has_special):
             return {
                 'valid': False,
-                'error': 'Password must contain uppercase, lowercase, digit, and special char'
+                'error': 'Password must contain uppercase, lowercase, digit, and special char (!@#$%^&*)'
             }
         
         return {'valid': True, 'error': None}

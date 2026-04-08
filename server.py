@@ -264,6 +264,11 @@ def upload_file(username):
 
     if not signature_b64 or not uploaded_file:
         return jsonify({'success': False, 'message': 'signature_b64 and file are required'}), 400
+    
+    #check if the file exists already
+    exists = storage_manager.get_file(username, os.path.basename(uploaded_file.filename) + '.enc')
+    if exists:
+        return jsonify({'success': False, 'message': 'File name already exists. Use a different name or delete it'}), 409
 
     # Get receiver public key from DB
     public_key_pem = user_manager.get_public_key(username)

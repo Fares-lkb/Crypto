@@ -4,6 +4,32 @@
 
 const API = 'http://127.0.0.1:5000';
 let _generatedPrivateKey = '';
+const PASSWORD_RULE_MESSAGE = 'Password must contain uppercase, lowercase, digit, and special char (!@#$%^&*)';
+
+function _validatePasswordComplexity(password) {
+  if (!password || password.length < 12) {
+    return 'Password must be at least 12 characters';
+  }
+
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasDigit = /\d/.test(password);
+  const hasSpecial = /[!@#$%^&*]/.test(password);
+
+  if (!(hasUpper && hasLower && hasDigit && hasSpecial)) {
+    return PASSWORD_RULE_MESSAGE;
+  }
+
+  return null;
+}
+
+function _normalizeRegisterError(message) {
+  if (!message) return 'Registration failed.';
+  if (message.startsWith('Password must contain uppercase, lowercase, digit, and special char')) {
+    return PASSWORD_RULE_MESSAGE;
+  }
+  return message;
+}
 
 function togglePassword() {
   const input = document.getElementById('regPass');
@@ -26,6 +52,9 @@ async function registerVault() {
   if (!username) { err.textContent = 'Please enter a username.'; return; }
   if (!password) { err.textContent = 'Please enter a password.'; return; }
 
+  const passwordError = _validatePasswordComplexity(password);
+  if (passwordError) { err.textContent = passwordError; return; }
+
   try {
     const res  = await fetch(`${API}/api/register`, {
       method: 'POST',
@@ -34,7 +63,7 @@ async function registerVault() {
     });
     const data = await res.json();
 
-    if (!data.success) { err.textContent = data.message; return; }
+    if (!data.success) { err.textContent = _normalizeRegisterError(data.message); return; }
 
     /* Store private key in sessionStorage for demo; show key modal */
     _generatedPrivateKey = data.private_key;

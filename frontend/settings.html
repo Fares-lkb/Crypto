@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Settings</title>
+  <title>About</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="shared.css"/>
@@ -13,7 +13,6 @@
 
 <div class="app-shell">
 
-  <!-- ── Sidebar ── -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-name">Digital Vault</div>
@@ -30,7 +29,7 @@
         <i class="fas fa-database"></i><span>Storage</span>
       </a>
       <a class="nav-item active" href="settings.html">
-        <i class="fas fa-gear"></i><span>Settings</span>
+        <i class="fas fa-circle-info"></i><span>About</span>
       </a>
     </nav>
     <a class="sidebar-upload-btn" href="upload.html">
@@ -38,10 +37,8 @@
     </a>
   </aside>
 
-  <!-- ── Main ── -->
   <main class="main">
 
-    <!-- Top Bar -->
     <div class="topbar">
       <div class="topbar-left">
         <div class="storage-status-label">Storage Status</div>
@@ -60,82 +57,72 @@
       </div>
     </div>
 
-    <!-- Page Content -->
     <div class="settings-content">
 
       <div class="settings-header">
-        <h2>Settings</h2>
-        <p>Manage your Digital Vault account configuration.</p>
+        <h2>About Digital Vault</h2>
+        <p>A secure and simple cloud space for storing your important files with confidence.</p>
       </div>
 
-      <div class="settings-layout">
-
-        <!-- Left: Categories -->
-        <div class="settings-categories">
-          <h4>Categories</h4>
-          <div class="settings-cat-item active" data-cat="profile" onclick="switchCat('profile')">
-            Account Profile <i class="fas fa-chevron-right"></i>
-          </div>
-        
+      <section class="about-hero-card">
+        <div class="about-hero-copy">
+          <p class="about-kicker">Your Personal Vault</p>
+          <h3>Keep your files organized, private, and always within reach.</h3>
+          <p class="about-summary">
+            Digital Vault is built for people who want a clean, dependable place to manage personal and academic files.
+            From upload to download, the experience is designed to stay clear, fast, and stress-free.
+          </p>
         </div>
-
-        <!-- Right: Panels -->
-        <div class="settings-panels">
-
-          <!-- ── Profile Panel ── -->
-          <div id="profilePanel" class="settings-panel">
-            <div class="panel-header">
-              <h3>Profile Information</h3>
-              <span class="update-link" onclick="saveProfile()">Update Info</span>
-            </div>
-
-            <div class="profile-identity">
-              <div class="profile-avatar-wrap">
-                <div class="profile-avatar">🧑‍💼</div>
-                <div class="edit-avatar-btn"><i class="fas fa-pen"></i></div>
-              </div>
-              <div class="profile-name-block">
-                <h3 id="displayName">Alexander Sterling</h3>
-                <p  id="displayEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="345558514c555a5051461a4255415840744751574146511a575b59">[email&#160;protected]</a></p>
-                <span class="plan-badge">Enterprise Plan</span>
-              </div>
-            </div>
-
-            <div class="profile-fields">
-              <div class="profile-field">
-                <label>Full Name</label>
-                <input type="text"  id="profileName"  value="Alexander Sterling"/>
-              </div>
-              <div class="profile-field">
-                <label>Work Email</label>
-                <input type="email" id="profileEmail" value="alexander.vault@secure.com"/>
-              </div>
-              <div class="profile-field">
-                <label>Organization</label>
-                <input type="text"  id="profileOrg"   value="Sterling Enterprises"/>
-              </div>
-              <div class="profile-field">
-                <label>Member Since</label>
-                <input type="text"  value="January 2022" readonly class="readonly-field"/>
-              </div>
-            </div>
-
-            <div class="danger-zone">
-              <div class="danger-zone-text">
-                <h4>Deactivate Account</h4>
-                <p>Permanently removes all vault data and terminates access.</p>
-              </div>
-              <button class="btn-danger" onclick="deleteVault()">
-                <i class="fas fa-trash"></i> Delete Vault
-              </button>
-            </div>
-          </div>
-
-          
-
+        <div class="about-hero-badges">
+          <span><i class="fas fa-shield"></i> Private by Design</span>
+          <span><i class="fas fa-cloud"></i> Accessible Anywhere</span>
+          <span><i class="fas fa-folder"></i> Easy File Management</span>
         </div>
-      </div>
+      </section>
+
+      <section class="about-grid">
+        <article class="about-card">
+          <h4><i class="fas fa-heart"></i> Our Mission</h4>
+          <p>
+            We help users protect their digital content while keeping everyday storage workflows simple and intuitive.
+          </p>
+        </article>
+
+        <article class="about-card">
+          <h4><i class="fas fa-star"></i> What You Get</h4>
+          <ul>
+            <li>A clean interface focused on daily use.</li>
+            <li>Personal dashboard for files and storage.</li>
+            <li>Smooth upload and retrieval experience.</li>
+          </ul>
+        </article>
+
+        <article class="about-card">
+          <h4><i class="fas fa-users"></i> Who It Is For</h4>
+          <p>
+            Students, creators, and professionals who want a dependable storage service that feels modern and easy to use.
+          </p>
+        </article>
+
+        <article class="about-card">
+          <h4><i class="fas fa-handshake-angle"></i> Support</h4>
+          <p>
+            Need help? Our team is here to assist with account questions and storage guidance whenever needed.
+          </p>
+          <p class="about-meta">Contact: support@digitalvault.local</p>
+        </article>
+      </section>
+
+      <p class="footer-note" id="aboutVersion">Digital Vault v1.0</p>
+
     </div>
 
   </main>
-</
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="state.js"></script>
+<script src="settings.js"></script>
+</body>
+</html>
