@@ -17,6 +17,20 @@ function getPrivateKeyPem() {
   return privateKeyB64 ? atob(privateKeyB64) : null;
 }
 
+async function getPublicKeyPem() {
+  const cached = sessionStorage.getItem('vaultPublicKey');
+  if (cached) return cached;
+
+  const res = await fetch(`${API}/api/users/me/public-key`, { headers: getAuthHeaders() });
+  const data = await res.json();
+  if (!data.success || !data.public_key) {
+    throw new Error(data.message || 'Unable to load public key.');
+  }
+
+  sessionStorage.setItem('vaultPublicKey', data.public_key);
+  return data.public_key;
+}
+
 async function signFileWithPrivateKey(file) {
   if (!window.CryptoModule) {
     throw new Error('Crypto library missing. Refresh page and retry.');
@@ -28,6 +42,20 @@ async function signFileWithPrivateKey(file) {
   }
 
   return await window.CryptoModule.signFileFromFile(file, pem);
+}
+
+async function buildEncryptedUploadPayload(file) {
+  if (!window.CryptoModule) {
+    throw new Error('Crypto library missing. Refresh page and retry.');
+  }
+
+  const privateKeyPem = getPrivateKeyPem();
+  if (!privateKeyPem) {
+    throw new Error('Private key missing in session.');
+  }
+
+  const publicKeyPem = await getPublicKeyPem();
+  return await window.CryptoModule.encryptFileForUpload(file, privateKeyPem, publicKeyPem);
 }
 
 /* ── File list now comes from the real API (see files.js) ── */
@@ -84,6 +112,7 @@ async function updateStorageBar() {
 function logout() {
   sessionStorage.removeItem('vaultUser');
   sessionStorage.removeItem('vaultPrivateKey');
+  sessionStorage.removeItem('vaultPublicKey');
   sessionStorage.removeItem('vaultToken');
   sessionStorage.removeItem('vaultPlan');
   window.location.href = 'login.html';
@@ -144,10 +173,15 @@ async function confirmUpload() {
   showToast('Encrypting and uploading…', 'success');
 
   try {
-    const signatureB64 = await signFileWithPrivateKey(_pendingFile);
+    const encrypted = await buildEncryptedUploadPayload(_pendingFile);
+    const encryptedBlob = new Blob([encrypted.encryptedBlob], { type: 'application/octet-stream' });
+
     const formData = new FormData();
-    formData.append('signature_b64', signatureB64);
-    formData.append('file', _pendingFile);
+    formData.append('signature_b64', encrypted.signatureB64);
+    formData.append('file_hash_b64', encrypted.fileHashB64);
+    formData.append('enc_aes_key_b64', encrypted.encAesKeyB64);
+    formData.append('original_filename', _pendingFile.name);
+    formData.append('file', encryptedBlob, `${_pendingFile.name}.enc`);
 
     const res  = await fetch(`${API}/api/files/upload`, {
       method: 'POST',

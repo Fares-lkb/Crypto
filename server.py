@@ -10,24 +10,12 @@ import secrets
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
-import io
 
 from user_manager import UserManager, StorageManager, NonceManager
 from user_manager.crypto_module import (
     generate_rsa_keypair,
-    sign_file,
     verify_signature,
-    compute_file_hash,
-    verify_file_integrity,
-    encrypt_file_aes,
-    decrypt_file_aes,
-    encrypt_aes_key_rsa,
-    decrypt_aes_key_rsa,
-    get_random_bytes,
 )
-from Crypto.PublicKey import RSA
-from Crypto.Hash import SHA256
-from Crypto.Signature import pkcs1_15
 
 app = Flask(__name__)
 CORS(app)  # allow browser requests from file:// or different port
@@ -250,60 +238,55 @@ def list_files(username):
 
 
 # ──────────────────────────────────────────
+# 4.b USER PUBLIC KEY (for client-side encryption)
+# GET /api/users/me/public-key
+# ──────────────────────────────────────────
+@app.route('/api/users/me/public-key', methods=['GET'])
+@_require_auth
+def get_my_public_key(username):
+    public_key = user_manager.get_public_key(username)
+    if not public_key:
+        return jsonify({'success': False, 'message': 'Public key not found'}), 404
+    return jsonify({'success': True, 'public_key': public_key})
+
+
+# ──────────────────────────────────────────
 # 5. UPLOAD
 # POST /api/files/upload
 # Body: multipart/form-data
-#   file (binary), signature_b64 (RSA signature generated client-side)
-# Server encrypts with hybrid scheme, stores .enc file + encrypted AES key
+#   file (encrypted blob), signature_b64, file_hash_b64, enc_aes_key_b64
+# Encryption is performed client-side. Server stores encrypted bytes + metadata.
 # ──────────────────────────────────────────
 @app.route('/api/files/upload', methods=['POST'])
 @_require_auth
 def upload_file(username):
     signature_b64 = request.form.get('signature_b64', '')
+    file_hash_b64 = request.form.get('file_hash_b64', '')
+    enc_aes_key_b64 = request.form.get('enc_aes_key_b64', '')
+    original_filename = request.form.get('original_filename', '')
     uploaded_file = request.files.get('file')
 
-    if not signature_b64 or not uploaded_file:
-        return jsonify({'success': False, 'message': 'signature_b64 and file are required'}), 400
-    
-    #check if the file exists already
-    exists = storage_manager.get_file(username, os.path.basename(uploaded_file.filename) + '.enc')
+    if not signature_b64 or not file_hash_b64 or not enc_aes_key_b64 or not uploaded_file:
+        return jsonify({'success': False, 'message': 'file, signature_b64, file_hash_b64 and enc_aes_key_b64 are required'}), 400
+
+    incoming_name = original_filename or uploaded_file.filename or 'uploaded_file'
+    safe_name = os.path.basename(incoming_name) + '.enc'
+
+    # check if the file exists already
+    exists = storage_manager.get_file(username, safe_name)
     if exists:
         return jsonify({'success': False, 'message': 'File name already exists. Use a different name or delete it'}), 409
 
-    # Get receiver public key from DB
-    public_key_pem = user_manager.get_public_key(username)
-    if not public_key_pem:
-        return jsonify({'success': False, 'message': 'User not found'}), 404
-
-    file_data       = uploaded_file.read()
-
-    # Signature is produced client-side; server only verifies it.
-    try:
-        signature_bytes = _b64dec(signature_b64)
-        signature_ok = verify_signature(file_data, signature_bytes, public_key_pem.encode('utf-8'))
-    except Exception:
-        signature_ok = False
-
-    if not signature_ok:
-        return jsonify({'success': False, 'message': 'Invalid file signature'}), 401
+    blob = uploaded_file.read()
+    if len(blob) < 32:
+        return jsonify({'success': False, 'message': 'Invalid encrypted payload format'}), 400
 
     # Check quota before processing
     available = storage_manager.get_available_space(username)
-    if available is not None and len(file_data) > available:
+    if available is not None and len(blob) > available:
         return jsonify({'success': False, 'message': 'Insufficient storage quota'}), 413
 
-    # Hybrid encrypt
-    aes_key       = get_random_bytes(32)
-    enc_result    = encrypt_file_aes(file_data, aes_key)
-    enc_aes_key   = encrypt_aes_key_rsa(aes_key, public_key_pem.encode('utf-8'))
-    file_hash     = compute_file_hash(file_data)
-
-    # Pack ciphertext: nonce(16) + tag(16) + ciphertext
-    blob = enc_result['nonce'] + enc_result['tag'] + enc_result['ciphertext']
-
     # Save to disk
-    incoming_name = uploaded_file.filename or 'uploaded_file'
-    safe_name  = os.path.basename(incoming_name) + '.enc'
     user_dir   = _user_dir(username)
     file_path  = os.path.join(user_dir, safe_name)
     with open(file_path, 'wb') as fh:
@@ -315,7 +298,7 @@ def upload_file(username):
         filename=safe_name,
         file_path=file_path,
         file_size=len(blob),
-        file_hash=_b64enc(file_hash),
+        file_hash=file_hash_b64,
         signature=signature_b64,
     )
     if not reg['success']:
@@ -323,9 +306,9 @@ def upload_file(username):
         return jsonify(reg), 400
 
     # Store encrypted AES key
-    storage_manager.store_encrypted_key(reg['file_id'], _b64enc(enc_aes_key))
+    storage_manager.store_encrypted_key(reg['file_id'], enc_aes_key_b64)
 
-    return jsonify({'success': True, 'message': f'{safe_name} encrypted and uploaded', 'file_id': reg['file_id']}), 201
+    return jsonify({'success': True, 'message': f'{safe_name} uploaded', 'file_id': reg['file_id']}), 201
 
 
 # ──────────────────────────────────────────
@@ -349,11 +332,6 @@ def download_file(username, filename):
 
     with open(file_path, 'rb') as fh:
         blob = fh.read()
-
-    # Unpack blob: nonce(16) + tag(16) + ciphertext
-    nonce      = blob[:16]
-    tag        = blob[16:32]
-    ciphertext = blob[32:]
 
     # Get encrypted AES key
     enc_aes_key_b64 = storage_manager.get_encrypted_key(file_meta['id'])

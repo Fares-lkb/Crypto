@@ -147,6 +147,7 @@ class NonceManager:
             return {
                 'valid': True,
                 'expired': False,
+                'timestamp': created_at,
                 'already_used': False,
                 'message': 'Nonce valid and verified'
             }

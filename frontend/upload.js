@@ -41,10 +41,15 @@ async function triggerUpload() {
   showToast('Encrypting and uploading…', 'success');
 
   try {
-    const signatureB64 = await signFileWithPrivateKey(_bigFile);
+    const encrypted = await buildEncryptedUploadPayload(_bigFile);
+    const encryptedBlob = new Blob([encrypted.encryptedBlob], { type: 'application/octet-stream' });
+
     const formData = new FormData();
-    formData.append('signature_b64', signatureB64);
-    formData.append('file', _bigFile);
+    formData.append('signature_b64', encrypted.signatureB64);
+    formData.append('file_hash_b64', encrypted.fileHashB64);
+    formData.append('enc_aes_key_b64', encrypted.encAesKeyB64);
+    formData.append('original_filename', _bigFile.name);
+    formData.append('file', encryptedBlob, `${_bigFile.name}.enc`);
 
     const res  = await fetch(`${API}/api/files/upload`, {
       method: 'POST',

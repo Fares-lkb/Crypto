@@ -74,6 +74,16 @@
     );
   }
 
+  async function importPublicKeyForOaep(publicKeyPem, hashName) {
+    return await crypto.subtle.importKey(
+      'spki',
+      pemToArrayBuffer(publicKeyPem),
+      { name: 'RSA-OAEP', hash: hashName },
+      false,
+      ['encrypt']
+    );
+  }
+
   async function importPrivateKeyForOaep(privateKeyPem, hashName) {
     return await crypto.subtle.importKey(
       'pkcs8',
@@ -164,6 +174,31 @@
     }
   }
 
+  async function encryptAesKeyRsa(aesKeyBytes, publicKeyPem) {
+    try {
+      const publicKey = await importPublicKeyForOaep(publicKeyPem, 'SHA-1');
+      const enc = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, publicKey, aesKeyBytes);
+      return new Uint8Array(enc);
+    } catch (_) {
+      const publicKey = await importPublicKeyForOaep(publicKeyPem, 'SHA-256');
+      const enc = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, publicKey, aesKeyBytes);
+      return new Uint8Array(enc);
+    }
+  }
+
+  async function encryptFileAesGcm(plainBytes, aesKeyBytes) {
+    const iv = crypto.getRandomValues(new Uint8Array(16));
+    const aesKey = await crypto.subtle.importKey('raw', aesKeyBytes, { name: 'AES-GCM' }, false, ['encrypt']);
+    const combined = new Uint8Array(
+      await crypto.subtle.encrypt({ name: 'AES-GCM', iv, tagLength: 128 }, aesKey, plainBytes)
+    );
+
+    const ciphertext = combined.slice(0, combined.length - 16);
+    const tag = combined.slice(combined.length - 16);
+
+    return concatUint8(iv, concatUint8(tag, ciphertext));
+  }
+
   async function decryptBlobAesGcm(blobB64, aesKeyBytes) {
     const blob = base64ToUint8Array(blobB64);
     if (blob.length < 32) throw new Error('Invalid encrypted blob format.');
@@ -222,8 +257,27 @@
     };
   }
 
+  async function encryptFileForUpload(file, privateKeyPem, publicKeyPem) {
+    const plainBytes = new Uint8Array(await file.arrayBuffer());
+    const aesKey = crypto.getRandomValues(new Uint8Array(32));
+
+    const encryptedBlob = await encryptFileAesGcm(plainBytes, aesKey);
+    const encAesKey = await encryptAesKeyRsa(aesKey, publicKeyPem);
+    const fileHash = await sha256(plainBytes);
+    const signature = await signBytes(plainBytes, privateKeyPem);
+
+    return {
+      encryptedBlob,
+      encryptedBlobB64: arrayBufferToBase64(encryptedBlob.buffer),
+      encAesKeyB64: arrayBufferToBase64(encAesKey.buffer),
+      fileHashB64: arrayBufferToBase64(fileHash.buffer),
+      signatureB64: arrayBufferToBase64(signature.buffer),
+    };
+  }
+
   window.CryptoModule = {
     signFileFromFile,
     decryptAndVerifyPackage,
+    encryptFileForUpload,
   };
 })();
